@@ -11,47 +11,6 @@ from timm.models import register_model
 from models.model_utils import BEiT3Wrapper, _get_base_config, _get_large_config, _get_beit3_config
 
 
-class TwoLayerMLP(nn.Module):
-    def __init__(
-            self,
-            in_features,
-            hidden_features,
-            out_features,
-            norm_layer,
-            norm_input=True,
-    ):
-        super().__init__()
-        self.norm1 = norm_layer(in_features) if norm_input else nn.Identity()
-        self.dense1 = nn.Linear(in_features, hidden_features)
-        self.norm2 = norm_layer(hidden_features)
-        self.act = nn.GELU()
-        self.dense2 = nn.Linear(hidden_features, out_features)
-
-    def forward(self, x):
-        x = self.norm1(x)
-        x = self.dense1(x)
-        x = self.norm2(x)
-        x = self.act(x)
-        return self.dense2(x)
-
-
-class Pooler(nn.Module):
-    def __init__(self, input_features, output_features, norm_layer):
-        super().__init__()
-        self.norm = norm_layer(input_features)
-        self.dense = nn.Linear(input_features, output_features)
-        self.activation = nn.Tanh()
-
-    def forward(self, x):
-        cls_rep = x[:, 0, :]
-        cls_rep = self.norm(cls_rep)
-        pooled_output = self.dense(cls_rep)
-        pooled_output = self.activation(pooled_output)
-        return pooled_output
-
-
-
-
 class BEiT3ForImageClassification(BEiT3Wrapper):
     def __init__(
             self,
