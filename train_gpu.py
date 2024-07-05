@@ -93,6 +93,8 @@ def get_args_parser():
                         help='LR scheduler (default: "cosine"')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-3)')
+    parser.add_argument('--weight_decay', type=float, default=2e-5, metavar='weight_decay',
+                        help='weight decay (default: 2e-5)')
     parser.add_argument('--lr-ep', action='store_true', default=False,
                         help='using the epoch-based scheduler')
     parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct',
@@ -363,12 +365,7 @@ def main(args):
     # print('Initial LR is ', linear_scaled_lr)
     # print('*****************')
 
-    optimizer = create_optimizer(args, model_without_ddp)
-
-    # TODO https://arxiv.org/pdf/2209.06794v4 (ViT-G, ViT-g, ViT-e) with "inverse_sqrt_lr_decay"
-    # optimizer = AdaFactor(model.parameters(), lr=0.0008, beta1=0.0, beta2=0.8) # For ViT-e
-    # lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=inverse_sqrt_lr_decay)
-
+    optimizer = create_optimizer(args, model_without_ddp) if args.freeze_layers else torch.optim.AdamW(model_without_ddp.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     loss_scaler = NativeScaler()
     lr_scheduler, _ = create_scheduler(args, optimizer)
